@@ -28,14 +28,20 @@ if (!empty($_POST)) {
     
     if (empty($error)) {
         //画像アップロード
-        $image = date('YmsHis') . $_FILES['image']['name'];
+        $image = date('YmdHis') . $_FILES['image']['name'];
         move_uploaded_file($_FILES['image']['tmp_name'], '../member_picture/' .$image);
 
         $_SESSION['join'] = $_POST;
-        $_SESSION['join']['name'] = $image;
+        $_SESSION['join']['image'] = $image;
         header('Location: check.php');
         exit();
     }   
+}
+
+//　書き直し
+if ($_REQUEST['action'] == 'rewrite') {
+    $_POST = $_SESSION['join'];
+    $error['rewrite'] = true; //画像指定エラーを表示させるための処理
 }
 ?>
 
