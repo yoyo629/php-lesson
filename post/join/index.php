@@ -1,4 +1,6 @@
 <?php
+require('../dbconnect.php');
+
 session_start();
 
 //フォーム送信されたかどうかの確認処理
@@ -23,6 +25,16 @@ if (!empty($_POST)) {
         $ext = substr($fileName, -3);//後ろから3文字を切り出して拡張子の確認
         if ($ext != 'jpg' && $ext != 'gif') {
             $error['image'] === 'type';
+        }
+    }
+
+    //　重複アカウントのチェック
+    if (empty($error)) {
+        $member = $db->prepare('select count(*) as cnt from members where email=?');
+        $member->execute(array($_POST['email']));
+        $record = $member->fetch();
+        if ($record['cnt'] > 0) {
+            $error['email'] = 'duplicate';
         }
     }
     
@@ -78,6 +90,9 @@ if ($_REQUEST['action'] == 'rewrite') {
                 <input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['email'], ENT_QUOTES); ?>" />
                 <?php if($error['email'] === 'blank'): ?>
                 <p class="error"> *　メールアドレスを入力してください</p>
+                <?php endif; ?>
+                <?php if ($error['email'] == 'duplicate'): ?>
+                <p class="error"> *　指定されたメールアドレスは既に登録されています。</p>
                 <?php endif; ?>
             </dd>
             <dt>パスワード<span class="required">必要</span></dt>
