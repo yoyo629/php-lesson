@@ -3,20 +3,33 @@ require('dbconnect.php');
 
 session_start();
 
+if ($_COOKIE['email'] != '') {
+    $_POST['email'] = $_COOKIE['email'];
+    $_POST['password'] = $_COOKIE['password'];
+    $_POST['save'] = 'on';
+}
+
 if(!empty($_POST)) {
-    //ログイン処理
+    //　ログイン処理
     if ($_POST['email'] != '' && $_POST['password'] != '') {
         $login = $db->prepare('select * from members where email = ? and password = ?');
-        $logion->execute(array(
+        $login->execute(array(
             $_POST['email'],
             sha1($_POST['password'])
         ));
     $member = $login->fetch();
     
     if ($member) {
-        //ログイン成功
+        //　ログイン成功
         $_SESSION['id'] = $member['id'];
         $_SESSION['time'] = time();
+
+            //　Cookieにログイン情報を記録する
+            //　チェックボックスにチェックを入れるとname="save"の値が'on'になる
+            if ($_POST['save'] == 'on') {
+                setcookie('email', $_POST['email'], time()+60*60*24*14);
+                setcookie('password', $_POST['password'], time()+60*60*24*14);
+            }
 
         header('Location: index.php'); exit();
     } else {
@@ -31,11 +44,11 @@ if(!empty($_POST)) {
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>ひとこと掲示板</title>
-	<link rel="stylesheet" href="../style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>ひとこと掲示板</title>
+    <link rel="stylesheet" href="../style.css" />
 </head>
 
 <body>
@@ -53,7 +66,7 @@ if(!empty($_POST)) {
           <dt>メールアドレス</dt>
           <dd>
           <input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['email'], ENT_QUOTES); ?>" />
-          <?php if ($email['login'] == 'blank'): ?>
+          <?php if ($error['login'] == 'blank'): ?>
           <p class="error"> * メールアドレスとパスワードをご記入ください。</p>
           <?php endif; ?>
           <?php if ($error['login'] == 'failed'): ?>
