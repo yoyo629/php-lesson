@@ -1,6 +1,5 @@
 <?php
 require('dbconnect.php');
-
 session_start();
 
 if ($_COOKIE['email'] != '') {
@@ -12,7 +11,7 @@ if ($_COOKIE['email'] != '') {
 if(!empty($_POST)) {
     //　ログイン処理
     if ($_POST['email'] != '' && $_POST['password'] != '') {
-        $login = $db->prepare('select * from members where email = ? and password = ?');
+        $login = $db->prepare('SELECT * FROM members WHERE email = ? AND password = ?');
         $login->execute(array(
             $_POST['email'],
             sha1($_POST['password'])
@@ -56,6 +55,7 @@ if(!empty($_POST)) {
   <div id="head">
     <h1>ログインする</h1>
   </div>
+  <div id="content">
   <div id="lead">
   <p>メールアドレスとパスワードを記入してログインしてください</p>
   <p>入会手続きがまだの方はこちらからどうぞ</p>
@@ -79,11 +79,13 @@ if(!empty($_POST)) {
           </dd>
           <dt>ログイン情報の記録</dt>
           <dd>
-          <input type="checkbox" name="save" value="on"><label for="save">次回からは自動ログイン</label>
+          <input id="save" type="checkbox" name="save" value="on"><label for="save">次回からは自動ログイン</label>
           </dd>
       </dl>
       <div><input type="submit" value="ログインする" /></div>
     </form>
+</div>
+
 </div>
 </body>
 </html>
