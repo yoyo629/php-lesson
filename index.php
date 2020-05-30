@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 require('dbconnect.php');
 if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 	// ログインしている
@@ -60,6 +61,39 @@ function makeLink($value) {
     return mb_ereg_replace("(https?)(://[[:alnum:]\+\$\;\?\.%,!#~*/:@&=_-]+)",'<a href="\1\2">\1\2</a>' , $value);
 }
 
+// いいね機能実装
+if (isset($_REQUEST['good'])) {
+    //　いいね済みの投稿ではないかチェック
+    $good_id = $db->prepare('SELECT count(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
+    $good_id->execute(array(
+        $_REQUEST['good'],
+        $_SESSION['id']
+    ));
+    $good_comment = $good_id->fetch();
+
+    if ($good_comment = 0) {
+        // いいね保存
+        $good_record = $db->prepare('INSERT INTO good SET post_id = ?, member_id = ?, created = NOW()');
+        $good_record->execute(array(
+            $_REQUEST['good'],
+            $_SESSION['id']
+        ));
+
+        header('Location: index.php');
+        exit();
+    } else {
+        // いいね削除
+        $good_del = $db->prepare('DELETE FROM good WHERE post_id = ?, AND member_id = ?');
+        $good_del->execute(array(
+            $_REQUEST['good'],
+            $_SESSION['id']
+        ));
+
+        header('Location: index.php');
+        exit();
+    }   
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -100,6 +134,15 @@ function makeLink($value) {
 			<p><?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>）</span>
       [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 			<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
+            <!-- いいねボタン -->
+            <div class="good_btn">
+                <a href="index.php?good=<?php echo h($post['id']); ?>">&#9825;</a>
+            </div>
+            <!-- いいね数 -->
+            <div class="good_cnt">
+                <span><?php echo h($post['cnt']); ?></span>
+            </div>
+
 		<?php
         if ($post['reply_post_id'] > 0):
         ?>
