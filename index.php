@@ -25,6 +25,7 @@ if (!empty($_POST)) {
 		header('Location: index.php'); exit();
 	}
 }
+
 // 投稿を取得する
 $page = $_REQUEST['page'];
 if ($page = '') {
@@ -63,15 +64,15 @@ function makeLink($value) {
 
 // いいね機能実装
 if (isset($_REQUEST['good'])) {
-    //　いいね済みの投稿ではないかチェック
-    $good_id = $db->prepare('SELECT count(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
+    // 　いいね済みの投稿ではないかチェック
+    $good_id = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
     $good_id->execute(array(
         $_REQUEST['good'],
         $_SESSION['id']
     ));
     $good_comment = $good_id->fetch();
 
-    if ($good_comment = 0) {
+    if ($good_comment['cnt'] < 1) {
         // いいね保存
         $good_record = $db->prepare('INSERT INTO good SET post_id = ?, member_id = ?, created = NOW()');
         $good_record->execute(array(
@@ -83,7 +84,7 @@ if (isset($_REQUEST['good'])) {
         exit();
     } else {
         // いいね削除
-        $good_del = $db->prepare('DELETE FROM good WHERE post_id = ?, AND member_id = ?');
+        $good_del = $db->prepare('DELETE FROM good WHERE post_id = ? AND member_id = ?');
         $good_del->execute(array(
             $_REQUEST['good'],
             $_SESSION['id']
@@ -93,8 +94,8 @@ if (isset($_REQUEST['good'])) {
         exit();
     }   
 }
-
 ?>
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -129,6 +130,11 @@ if (isset($_REQUEST['good'])) {
 		<?php
 		foreach ($posts as $post):
 		?>
+
+        <?php
+        var_dump($post);
+        ?>
+
 		<div class="msg">
 			<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
 			<p><?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>）</span>
@@ -136,12 +142,10 @@ if (isset($_REQUEST['good'])) {
 			<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
             <!-- いいねボタン -->
             <div class="good_btn">
-                <a href="index.php?good=<?php echo h($post['id']); ?>">&#9825;</a>
+                <!-- 投稿IDをリクエストパラメータへ -->
+                <p><a href="index.php?good=<?php echo h($post['id']); ?>">いいね</a></p>
             </div>
             <!-- いいね数 -->
-            <div class="good_cnt">
-                <span><?php echo h($post['cnt']); ?></span>
-            </div>
 
 		<?php
         if ($post['reply_post_id'] > 0):
@@ -178,7 +182,7 @@ if (isset($_REQUEST['good'])) {
         <?php
         if ($page < $maxPage) {
         ?>
-        <li><a href="index.php?=<?php print($page + 1); ?>">次のページへ</a></li>
+        <li><a href="index.php?page=<?php print($page + 1); ?>">次のページへ</a></li>
         <?php    
         } else {
         ?>
