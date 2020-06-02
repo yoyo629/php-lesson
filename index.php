@@ -28,7 +28,7 @@ if (!empty($_POST)) {
 
 // 投稿を取得する
 $page = $_REQUEST['page'];
-if ($page = '') {
+if ($page == '') {
     $page = 1;
 }
 $page = max($page, 1);
@@ -41,13 +41,13 @@ $page = min($page, $maxPage);
 
 $start = ($page - 1) * 5;
 
-$posts = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id ORDER BY p.created DESC LIMIT ?,5');
+$posts = $db->prepare('SELECT m.name,m.picture,p.*,count(g.post_id) AS good_cnt FROM members m, posts p LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id GROUP BY g.post_id ORDER BY p.created DESC LIMIT ?,5');
 $posts->bindParam(1, $start, PDO::PARAM_INT);
 $posts->execute();
 
 // 返信の場合
 if (isset($_REQUEST['res'])) {
-	$response = $db->prepare('SELECT m.name, m.picture, p.* FROM members m,	posts p WHERE m.id=p.member_id AND p.id=? ORDER BY p.created DESC');
+    $response = $db->prepare('SELECT m.name, m.picture, p.* FROM members m,	posts p WHERE m.id=p.member_id AND p.id=? ORDER BY p.created DESC');
 		$response->execute(array($_REQUEST['res']));
 		$table = $response->fetch();
 		$message = '@' . $table['name'] . ' ' . $table['message'];
@@ -64,16 +64,19 @@ function makeLink($value) {
 
 // いいね機能実装
 if (isset($_REQUEST['good'])) {
-    // 　いいね済みの投稿ではないかチェック
+    
+    // いいね済みの投稿ではないかチェック
     $good_id = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
     $good_id->execute(array(
         $_REQUEST['good'],
         $_SESSION['id']
     ));
+    // 抽出された件数を代入
     $good_comment = $good_id->fetch();
 
+    // 抽出された投稿が新規の場合の処理と登録済の場合の処理
     if ($good_comment['cnt'] < 1) {
-        // いいね保存
+        // 新規の場合（いいね保存）
         $good_record = $db->prepare('INSERT INTO good SET post_id = ?, member_id = ?, created = NOW()');
         $good_record->execute(array(
             $_REQUEST['good'],
@@ -83,7 +86,7 @@ if (isset($_REQUEST['good'])) {
         header('Location: index.php');
         exit();
     } else {
-        // いいね削除
+        // いいね済の場合（いいね削除）
         $good_del = $db->prepare('DELETE FROM good WHERE post_id = ? AND member_id = ?');
         $good_del->execute(array(
             $_REQUEST['good'],
@@ -130,23 +133,19 @@ if (isset($_REQUEST['good'])) {
 		<?php
 		foreach ($posts as $post):
 		?>
-
-        <?php
-        var_dump($post);
-        ?>
-
 		<div class="msg">
 			<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
 			<p><?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>）</span>
       [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 			<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
-            <!-- いいねボタン -->
+            <!-- いいねボタン ------------------------------------------------------------->
             <div class="good_btn">
-                <!-- 投稿IDをリクエストパラメータへ -->
-                <p><a href="index.php?good=<?php echo h($post['id']); ?>">いいね</a></p>
+                <!-- 投稿コメントのIDをリクエストパラメータへ -->
+                <p><a href="index.php?good=<?php echo h($post['id']); ?>">いいね!</a></p>
             </div>
-            <!-- いいね数 -->
-
+            <!-- いいね数表示 -->
+            <div class="good_cnt"><?php echo h($post['good_cnt']); ?></div>
+            <!-- 課題実装ここまで ---------------------------------------------------------->
 		<?php
         if ($post['reply_post_id'] > 0):
         ?>
