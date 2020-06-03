@@ -41,7 +41,7 @@ $page = min($page, $maxPage);
 
 $start = ($page - 1) * 5;
 
-$posts = $db->prepare('SELECT m.name,m.picture,p.*,count(g.post_id) AS good_cnt FROM members m, posts p LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id GROUP BY g.post_id ORDER BY p.created DESC LIMIT ?,5');
+$posts = $db->prepare('SELECT m.name,m.picture,p.*,count(g.post_id) AS good_cnt FROM members m, posts p LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id GROUP BY p.id ORDER BY p.created DESC LIMIT ?,5');
 $posts->bindParam(1, $start, PDO::PARAM_INT);
 $posts->execute();
 
@@ -62,7 +62,7 @@ function makeLink($value) {
     return mb_ereg_replace("(https?)(://[[:alnum:]\+\$\;\?\.%,!#~*/:@&=_-]+)",'<a href="\1\2">\1\2</a>' , $value);
 }
 
-// いいね機能実装
+// いいね機能実装--------------------------------------------------------------------------------------
 if (isset($_REQUEST['good'])) {
     
     // いいね済みの投稿ではないかチェック
@@ -83,7 +83,10 @@ if (isset($_REQUEST['good'])) {
             $_SESSION['id']
         ));
 
-        header('Location: index.php');
+        // いいねを実行したページ数を渡してトップに戻らないようにする
+        $redirect = "index.php?page=" . $page;
+        header("Location:" . $redirect );
+
         exit();
     } else {
         // いいね済の場合（いいね削除）
@@ -93,10 +96,20 @@ if (isset($_REQUEST['good'])) {
             $_SESSION['id']
         ));
 
-        header('Location: index.php');
+        $redirect = "index.php?page=" . $page;
+        header("Location:" . $redirect );
         exit();
     }   
+
+        // ログインユーザーがいいねしているコメントを全て取得
+        $usersGood = $db->prepare('SELECT * FROM good WHERE post_id = ? AND member_id = ?'); 
+        $usersGood->execute(array(
+            $_POST['id'],
+            $_SESSION['id']
+        ));
+        $usersGoodCnt = $usersGood->fetch();
 }
+    // いいね機能ここまで----------------------------------------------------------------------------------
 ?>
 
 <!DOCTYPE html>
@@ -107,7 +120,7 @@ if (isset($_REQUEST['good'])) {
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>ひとこと掲示板</title>
 
-	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet" href="./css/style.css" />
 </head>
 
 <body>
@@ -139,13 +152,24 @@ if (isset($_REQUEST['good'])) {
       [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 			<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
             <!-- いいねボタン ------------------------------------------------------------->
+        <?php
+        if ($usetsGoodCnt['post_id'] < 1):
+        ?>
             <div class="good_btn">
-                <!-- 投稿コメントのIDをリクエストパラメータへ -->
-                <p><a href="index.php?good=<?php echo h($post['id']); ?>">いいね!</a></p>
+                <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
+                <p><a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">いいね!</a><?php echo h($post['good_cnt']); ?></p>
             </div>
-            <!-- いいね数表示 -->
-            <div class="good_cnt"><?php echo h($post['good_cnt']); ?></div>
-            <!-- 課題実装ここまで ---------------------------------------------------------->
+        <?php
+        else : 
+        ?>
+              <div class="good_btn">
+                <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
+                <p><a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>" style="color:#F33;">いいね!</a><?php echo h($post['good_cnt']); ?></p>
+            </div>
+        <?php
+        endif;
+        ?>
+            <!-- いいね実装ここまで ---------------------------------------------------------->
 		<?php
         if ($post['reply_post_id'] > 0):
         ?>
