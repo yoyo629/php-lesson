@@ -99,17 +99,10 @@ if (isset($_REQUEST['good'])) {
         $redirect = "index.php?page=" . $page;
         header("Location:" . $redirect );
         exit();
-    }   
+    }  
 
-        // ログインユーザーがいいねしているコメントを全て取得
-        $usersGood = $db->prepare('SELECT * FROM good WHERE post_id = ? AND member_id = ?'); 
-        $usersGood->execute(array(
-            $_POST['id'],
-            $_SESSION['id']
-        ));
-        $usersGoodCnt = $usersGood->fetch();
 }
-    // いいね機能ここまで----------------------------------------------------------------------------------
+// いいね機能ここまで----------------------------------------------------------------------------------
 ?>
 
 <!DOCTYPE html>
@@ -127,6 +120,7 @@ if (isset($_REQUEST['good'])) {
 <div id="wrap">
   <div id="head">
     <h1>ひとこと掲示板</h1>
+
   </div>
   <div id="content">
         <div style="text-align: right"><a href="logout.php">ログアウト</a></div>
@@ -143,53 +137,44 @@ if (isset($_REQUEST['good'])) {
 		</div>
 		</form>
 
-		<?php
-		foreach ($posts as $post):
-		?>
+		<?php foreach ($posts as $post): ?>
 		<div class="msg">
 			<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
 			<p><?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>）</span>
-      [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
+            [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
 			<p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
-            <!-- いいねボタン ------------------------------------------------------------->
+		<?php if ($post['reply_post_id'] > 0): ?>
+            <a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">返信元のメッセージ</a>
+        <?php endif; ?>
+        <?php if ($_SESSION['id'] == $post['member_id']): ?>
+            [<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]
+        <?php endif; ?>
+        </p>
+
+        <!-- 各投稿コメントにログインユーザーがいいねをしているかチェックする -->
         <?php
-        if ($usetsGoodCnt['post_id'] < 1):
+        $usersGood = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
+        $usersGood->execute(array(
+            $post['id'],
+            $_SESSION['id']
+        ));
+        $usersGoodCnt = $usersGood->fetch();
         ?>
+        <!-- いいねボタン実装　ログインユーザーがいいねをしていた場合 -->
+        <?php if ($usersGoodCnt['cnt'] > 0): ?>
             <div class="good_btn">
                 <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
+                <p><a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:#F33;">いいね!</a><?php echo h($post['good_cnt']); ?></p>
+            </div>
+        <!-- いいねをしていない場合 -->
+        <?php else : ?>
+              <div class="good_btn">
                 <p><a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">いいね!</a><?php echo h($post['good_cnt']); ?></p>
             </div>
-        <?php
-        else : 
-        ?>
-              <div class="good_btn">
-                <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
-                <p><a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>" style="color:#F33;">いいね!</a><?php echo h($post['good_cnt']); ?></p>
-            </div>
-        <?php
-        endif;
-        ?>
-            <!-- いいね実装ここまで ---------------------------------------------------------->
-		<?php
-        if ($post['reply_post_id'] > 0):
-        ?>
-            <a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">返信元のメッセージ</a>
-        <?php
-        endif;
-        ?>
-        <?php
-        if ($_SESSION['id'] == $post['member_id']):
-        ?>
-            [<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]
-        <?php
-        endif;
-        ?>
-        </p>
+        <?php endif; ?>
         </div>
-		<?php
-		endforeach;
-		?>
-
+		<?php endforeach; ?>
+        
         <ul class="paging">
         <?php
         if ($page > 1) {
