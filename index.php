@@ -18,34 +18,33 @@ if (!empty($_POST)) {
 	if ($_POST['message'] != '') {
 		$message = $db->prepare('INSERT INTO posts SET member_id=?, message=?,reply_post_id=?,created=NOW()');
 		$message->execute(array(
-			$member['id'],
+            $member['id'],
 			$_POST['message'],
             $_POST['reply_post_id']
         ));
 		header('Location: index.php'); exit();
 	}
 }
+        // 投稿を取得する
+        $page = $_REQUEST['page'];
+            if ($page == '') {
+                $page = 1;
+            }
+                $page = max($page, 1);
 
-// 投稿を取得する
-$page = $_REQUEST['page'];
-    if ($page == '') {
-        $page = 1;
-    }
-    $page = max($page, 1);
+        // 最終ページを取得する
+        $counts = $db->query('SELECT COUNT(*) AS cnt FROM posts');
+        $cnt = $counts->fetch();
+        $maxPage = ceil($cnt['cnt'] / 5);
+        $page = min($page, $maxPage);
 
-// 最終ページを取得する
-$counts = $db->query('SELECT COUNT(*) AS cnt FROM posts');
-$cnt = $counts->fetch();
-$maxPage = ceil($cnt['cnt'] / 5);
-$page = min($page, $maxPage);
+        $start = ($page - 1) * 5;
 
-$start = ($page - 1) * 5;
-
-// 各ページ毎に投稿を5件取得する
-$posts = $db->prepare('SELECT m.name,m.picture,p.*,count(g.post_id) AS good_cnt FROM members m, posts p 
-LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id GROUP BY p.id ORDER BY p.created DESC LIMIT ?,5');
-$posts->bindParam(1, $start, PDO::PARAM_INT);
-$posts->execute();
+        // 各ページ毎に投稿を5件取得する
+        $posts = $db->prepare('SELECT m.name,m.picture,p.*,count(g.post_id) AS good_cnt FROM members m, posts p 
+        LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id GROUP BY p.id ORDER BY p.created DESC LIMIT ?,5');
+        $posts->bindParam(1, $start, PDO::PARAM_INT);
+        $posts->execute();
 
 // 返信の場合
 if (isset($_REQUEST['res'])) {
@@ -68,215 +67,218 @@ function makeLink($value) {
 
 // いいね機能実装--------------------------------------------------------------------------------------
 //　いいねボタンが押されたとき
-if (isset($_REQUEST['good'])) {
-    // いいね済みの投稿ではないかチェック
-    $good = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
-    $good->execute(array(
-        $_REQUEST['good'],
-        $_SESSION['id']
-    ));
-    // 抽出された件数を代入
-    $good_comment = $good->fetch();
-
-    // 抽出された投稿が新規の場合の処理と登録済の場合の処理
-    if ($good_comment['cnt'] < 1) {
-        // 新規の場合（いいね保存）
-        $good_record = $db->prepare('INSERT INTO good SET post_id = ?, member_id = ?, created = NOW()');
-        $good_record->execute(array(
+    if (isset($_REQUEST['good'])) {
+        // いいね済みの投稿ではないかチェック
+        $good = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
+        $good->execute(array(
             $_REQUEST['good'],
             $_SESSION['id']
         ));
-        // いいねを実行したページ数を渡してトップに戻らないようにする
-        $redirect_url = "index.php?page=" . $page;
-        header("Location:" . $redirect_url);
-        exit();
-    } else {
-        // いいね済の場合（いいね削除）
-        $good_del = $db->prepare('DELETE FROM good WHERE post_id = ? AND member_id = ?');
-        $good_del->execute(array(
-            $_REQUEST['good'],
-            $_SESSION['id']
-        ));
-        $redirect_url = "index.php?page=" . $page;
-        header("Location:" . $redirect_url);
-        exit();
-    }  
+        // 抽出された件数を代入
+        $good_comment = $good->fetch();
 
-}
+        // 抽出された投稿が新規の場合の処理と登録済の場合の処理
+        if ($good_comment['cnt'] < 1) {
+            // 新規の場合（いいね保存）
+            $good_record = $db->prepare('INSERT INTO good SET post_id = ?, member_id = ?, created = NOW()');
+            $good_record->execute(array(
+                $_REQUEST['good'],
+                $_SESSION['id']
+            ));
+            // いいねを実行したページ数を渡してトップに戻らないようにする
+            $redirect_url = "index.php?page=" . $page;
+            header("Location:" . $redirect_url);
+            exit();
+        } else {
+            // いいね済の場合（いいね削除）
+            $good_del = $db->prepare('DELETE FROM good WHERE post_id = ? AND member_id = ?');
+            $good_del->execute(array(
+                $_REQUEST['good'],
+                $_SESSION['id']
+            ));
+            $redirect_url = "index.php?page=" . $page;
+            header("Location:" . $redirect_url);
+            exit();
+        }  
+
+    }
 // いいね機能ここまで----------------------------------------------------------------------------------
 
 //　リツイート実装-------------------------------------------------------------------------------------
     //　リツイートした場合
     if (isset($_REQUEST['retweet'])) {
-        // リツイートする投稿内容を取得
+        // リツイートする元ツイートを取得
         $getTweet = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id = p.member_id AND p.id = ? ORDER BY p.created DESC');
         $getTweet->execute(array($_REQUEST['retweet']));
             $retweet_post = $getTweet->fetch();
-            //　リツイート実行メッセージとリツイート
-            $retweet_msg = $member['name'] . 'さんがリツイート => '. $retweet_post['message'];
-          
+                      
         //　ログインユーザーがリツイート済みかチェック
-        $usersRetweet = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE member_id = ? AND retweet_post_id = ?');
+        $usersRetweet = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_member_id = ? AND retweet_post_id = ?');
         $usersRetweet->execute(array(
             $_SESSION['id'],
             $_REQUEST['retweet']
             ));
             $retweet_cnt = $usersRetweet->fetch();
-            // ユーザーがリツイートしていた場合
+            // ユーザーがリツイートしていなかった場合は＋１
             if($retweet_cnt['ret_cnt'] < 1) {
-                $retweet_record = $db->prepare('INSERT INTO posts SET message = ?, member_id = ?, retweet_post_id = ?, created = NOW()');
+                $retweet_record = $db->prepare('INSERT INTO posts SET message = ?, member_id = ?,retweet_post_id = ?,retweet_member_id = ?, created = NOW()');
                 $retweet_record->execute(array(
-                    $retweet_msg,
-                    $_SESSION['id'],
-                    $_REQUEST['retweet']
+                    $retweet_post['message'],
+                    $retweet_post['member_id'],
+                    $_REQUEST['retweet'],
+                    $_SESSION['id']
                     ));
-
-                    $redirect_url = "index.php?page=" . $page;
-                    header("Location:" . $redirect_url);
-                    exit();
+                    // リツイートしたらトップへ遷移
+                    header('Location: index.php'); exit();
             } else {
-                $retweet_del = $db->prepare('DELETE FROM posts WHERE member_id = ? AND retweet_post_id = ?');
+                // リツイートしていた場合は削除
+                $retweet_del = $db->prepare('DELETE FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
                 $retweet_del->execute(array(
-                    $_SESSION['id'],
-                    $_REQUEST['retweet']
+                    $_REQUEST['retweet'],
+                    $_SESSION['id']
                     ));
                     $redirect_url = "index.php?page=" . $page;
                     header("Location:" . $redirect_url);
                     exit();
             }
         }
+                    //　リツイートしたユーザー名を表示するため、idとnameをペアにして配列として取得する
+                     $retweet_username = $db->query('SELECT id, name FROM members');
+                     $retweet_username = $retweet_username->fetchAll(PDO::FETCH_KEY_PAIR);
+                    // var_dump($rt_id_name);
 ?>
 
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>ひとこと掲示板</title>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>ひとこと掲示板</title>
 
-	<link rel="stylesheet" href="./css/style.css" />
-</head>
+        <link rel="stylesheet" href="./css/style.css" />
+    </head>
 
-<body>
-<div id="wrap">
-  <div id="head">
-    <h1>ひとこと掲示板</h1>
+        <body>
+        <div id="wrap">
+        <div id="head">
+            <h1>ひとこと掲示板</h1>
+        </div>
+        <div id="content">
+                <div style="text-align: right"><a href="logout.php">ログアウト</a></div>
+                <form action="" method="post">
+                    <dl>
+                        <dt><?php echo h($member['name']); ?>さん、メッセージをどうぞ</dt>
+                    <dd>
+                    <textarea name="message" cols="50" rows="5"><?php echo h($message); ?></textarea>
+                    <input type="hidden" name="reply_post_id" value="<?php echo h($_REQUEST['res']); ?>" />
+                    </dd>
+                    </dl>
+                    <div>
+                    <input type="submit" value="投稿する" />
+                    </div>
+                </form>
 
-  </div>
-  <div id="content">
-        <div style="text-align: right"><a href="logout.php">ログアウト</a></div>
-		<form action="" method="post">
-		<dl>
-			<dt><?php echo h($member['name']); ?>さん、メッセージをどうぞ</dt>
-		<dd>
-		<textarea name="message" cols="50" rows="5"><?php echo h($message); ?></textarea>
-		<input type="hidden" name="reply_post_id" value="<?php echo h($_REQUEST['res']); ?>" />
-		</dd>
-		</dl>
-		<div>
-		<input type="submit" value="投稿する" />
-		</div>
-		</form>
+                <?php foreach ($posts as $post): ?>
+                    <div class="msg">
+                        <!-- リツイートされたメッセージを表示 -->
+                        <?php if ($post['retweet_post_id'] > 0): ?><p><?php echo h($retweet_username[$post['retweet_member_id']]); ?>さんがリツイート</p><?php endif; ?>
+                        <img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
+                        <?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>)</span>
+                        [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
+                        <p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a></p>
+                    <!-- 返信の場合 -->
+                    <?php if ($post['reply_post_id'] > 0): ?>
+                        <p><a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">返信元のメッセージ</a></p>
+                    <?php endif; ?>
+                    <?php if ($_SESSION['id'] == $post['member_id']): ?>
+                        <p>[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]</p>
+                    <?php endif; ?>
 
-		<?php foreach ($posts as $post): ?>
-            <div class="msg">
-                <img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
-                <p><?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>）</span>
-                [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
-                <p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a></p>
-            <!-- 返信の場合 -->
-            <?php if ($post['reply_post_id'] > 0): ?>
-                <p><a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">返信元のメッセージ</a></p>
-            <?php endif; ?>
-            <?php if ($_SESSION['id'] == $post['member_id']): ?>
-                <p>[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]</p>
-            <?php endif; ?>
+                    <!-- 各投稿をログインユーザーがリツイートしているかチェック -->
+                    
+                    <?php
+                    $retweetCheck = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
+                    $retweetCheck->execute(array(
+                        $post['id'],
+                        $_SESSION['id']
+                    ));
+                    $usersRetweetCheck = $retweetCheck->fetch();
+                    ?>
+                    <!-- 表示するリツイート総数を取得 -->
+                    <?php
+                    $ret_count = $db->prepare('SELECT COUNT(*) as retweetCounts FROM posts WHERE retweet_post_id = ?');
+                    $ret_count->execute(array($post['id']));
+                    $get_Retweet = $ret_count->fetch();
+                    ?>
 
-            <!-- 各コメントをログインユーザーがリツイートしているかチェック -->
-            <?php
-            $retweetCheck = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE member_id = ? AND retweet_post_id = ?');
-            $retweetCheck->execute(array(
-                $_SESSION['id'],
-                $post['id']
-            ));
-            $usersRetweetCnt = $retweetCheck->fetch();
-            ?>
-            <!-- 表示するリツイート数を取得 -->
-            <?php
-            $ret_count = $db->prepare('SELECT COUNT(*) as retweet_cnt FROM posts WHERE retweet_post_id = ?');
-            $ret_count->execute(array($post['id']));
-            $get_Retweet = $ret_count->fetch();
-            ?>
+                    <!-- リツイートボタン実装　リツイートしていた場合 -->
+                    <?php if ($usersRetweetCheck['ret_cnt'] > 0): ?>
+                        <div class="retweet_btn">
+                        <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
+                        &page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweetCounts']); ?></p>
+                        </div>
+                    <?php else : ?>
+                        <div class="retweet_btn">
+                        <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
+                        &page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweetCounts']); ?></p>
+                        </div>
+                    <?php endif; ?>
+            
+                    <!-- 各投稿コメントにログインユーザーがいいねをしているかチェックする -->
+                    <?php
+                    $usersGood = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
+                    $usersGood->execute(array(
+                        $post['id'],
+                        $_SESSION['id']
+                    ));
+                    $usersGoodCnt = $usersGood->fetch();
+                    ?>
+                    <!-- いいねボタン実装　ログインユーザーがいいねをしていた場合 -->
+                    <?php if ($usersGoodCnt['cnt'] > 0): ?>
+                        <div class="good_btn">
+                            <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
+                            <p><a href="index.php?good=<?php echo h($post['id']); ?>
+                            &page=<?php echo h($page); ?>"style="color:pink;">いいね!</a><?php echo h($post['good_cnt']); ?></p>
+                        </div>
+                    <!-- いいねをしていない場合 -->
+                    <?php else : ?>
+                        <div class="good_btn">
+                            <p><a href="index.php?good=<?php echo h($post['id']); ?>
+                            &page=<?php echo h($page); ?>">いいね!</a><?php echo h($post['good_cnt']); ?></p>
+                        </div>
+                    <?php endif; ?>
+            
+                    </div>
+                <?php endforeach; ?>
+                
+                <ul class="paging">
+                <?php
+                if ($page > 1) {
+                ?>
+                <li><a href="index.php?page=<?php print($page - 1); ?>">前のページ</a></li>
+                <?php
+                } else {
+                ?>
+                <li>前のページへ</li>
+                <?php
+                }
+                ?>
+                <?php
+                if ($page < $maxPage) {
+                ?>
+                <li><a href="index.php?page=<?php print($page + 1); ?>">次のページへ</a></li>
+                <?php    
+                } else {
+                ?>
+                <li>次のページへ</li>
+                <?php
+                }
+                ?>
+                </ul>
 
-            <!-- リツイートボタン実装　リツイートしていた場合 -->
-            <?php if ($usersRetweetCnt['ret_cnt'] > 0): ?>
-                <div class="retweet_btn">
-                   <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
-                   &page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_cnt']); ?></p>
-                </div>
-            <?php else : ?>
-                <div class="retweet_btn">
-                   <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
-                   &page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweet_cnt']); ?></p>
-                </div>
-            <?php endif; ?>
-        
+        </div>
 
-            <!-- 各投稿コメントにログインユーザーがいいねをしているかチェックする -->
-            <?php
-            $usersGood = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
-            $usersGood->execute(array(
-                $post['id'],
-                $_SESSION['id']
-            ));
-            $usersGoodCnt = $usersGood->fetch();
-            ?>
-            <!-- いいねボタン実装　ログインユーザーがいいねをしていた場合 -->
-            <?php if ($usersGoodCnt['cnt'] > 0): ?>
-                <div class="good_btn">
-                    <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
-                    <p><a href="index.php?good=<?php echo h($post['id']); ?>
-                    &page=<?php echo h($page); ?>"style="color:pink;">いいね!</a><?php echo h($post['good_cnt']); ?></p>
-                </div>
-            <!-- いいねをしていない場合 -->
-            <?php else : ?>
-                <div class="good_btn">
-                    <p><a href="index.php?good=<?php echo h($post['id']); ?>
-                    &page=<?php echo h($page); ?>">いいね!</a><?php echo h($post['good_cnt']); ?></p>
-                </div>
-            <?php endif; ?>
-    
-            </div>
-		<?php endforeach; ?>
-        
-        <ul class="paging">
-        <?php
-        if ($page > 1) {
-        ?>
-        <li><a href="index.php?page=<?php print($page - 1); ?>">前のページ</a></li>
-        <?php
-        } else {
-        ?>
-        <li>前のページへ</li>
-        <?php
-        }
-        ?>
-        <?php
-        if ($page < $maxPage) {
-        ?>
-        <li><a href="index.php?page=<?php print($page + 1); ?>">次のページへ</a></li>
-        <?php    
-        } else {
-        ?>
-        <li>次のページへ</li>
-        <?php
-        }
-        ?>
-        </ul>
-
-  </div>
-
-</div>
-</body>
+        </div>
+        </body>
 </html>
