@@ -10,8 +10,7 @@ if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 	$member = $members->fetch();
 } else {
 	// ログインしていない
-	header('Location: login.php');
-	exit();
+	header('Location: login.php'); exit();
 }
 // 投稿を記録する
 if (!empty($_POST)) {
@@ -87,8 +86,7 @@ function makeLink($value) {
             ));
             // いいねを実行したページ数を渡してトップに戻らないようにする
             $redirect_url = "index.php?page=" . $page;
-            header("Location:" . $redirect_url);
-            exit();
+            header("Location:" . $redirect_url); exit();
         } else {
             // いいね済の場合（いいね削除）
             $good_del = $db->prepare('DELETE FROM good WHERE post_id = ? AND member_id = ?');
@@ -97,8 +95,7 @@ function makeLink($value) {
                 $_SESSION['id']
             ));
             $redirect_url = "index.php?page=" . $page;
-            header("Location:" . $redirect_url);
-            exit();
+            header("Location:" . $redirect_url); exit();
         }  
 
     }
@@ -119,6 +116,7 @@ function makeLink($value) {
             $_REQUEST['retweet']
             ));
             $retweet_cnt = $usersRetweet->fetch();
+
             // ユーザーがリツイートしていなかった場合は＋１
             if($retweet_cnt['ret_cnt'] < 1) {
                 $retweet_record = $db->prepare('INSERT INTO posts SET message = ?, member_id = ?,retweet_post_id = ?,retweet_member_id = ?, created = NOW()');
@@ -128,6 +126,25 @@ function makeLink($value) {
                     $_REQUEST['retweet'],
                     $_SESSION['id']
                     ));
+                //　各投稿のリツイート総数を取得
+                $ret_getcount = $db->prepare('SELECT COUNT(*) as get_cnt from posts where retweet_post_id = ?');
+                $ret_getcount->execute(array(
+                    $_REQUEST['retweet']
+                ));
+                $ret_getcounts = $ret_getcount->fetch();
+                
+                //  上記で取得したリツイート総数でリツイート元のカウントを更新
+                $update_ret = $db->prepare('UPDATE posts set retweet_counts = ? where id = ?');
+                $update_ret->execute(array(
+                    $ret_getcounts['get_cnt'],
+                    $_REQUEST['retweet']));
+
+                //  更新されたリツイート総数を同じくリツイートされている投稿に反映させる
+                $same_ret_update = $db->prepare('UPDATE posts SET retweet_counts = ? where retweet_post_id = ?');
+                $same_ret_update->execute(array(
+                    $ret_getcounts['get_cnt'],
+                    $_REQUEST['retweet']));
+
                     // リツイートしたらトップへ遷移
                     header('Location: index.php'); exit();
             } else {
@@ -137,9 +154,23 @@ function makeLink($value) {
                     $_REQUEST['retweet'],
                     $_SESSION['id']
                     ));
+                // リツイートを取り消しされた場合にリツイート数も合わせて更新する
+                $del_ret_count = $db->prepare('SELECT COUNT(*) as get_cnt from posts where retweet_post_id = ?');
+                $del_ret_count->execute(array(
+                $_REQUEST['retweet']
+                ));
+                $del_ret_counts = $del_ret_count->fetch();
+                //  更新されたリツイート総数を同じくリツイートされている投稿に反映させる
+                $del_same_ret = $db->prepare('UPDATE posts SET retweet_counts = ? where id = ?');
+                $del_same_ret->execute(array(
+                    $ret_getcounts['get_cnt'],
+                    $_REQUEST['retweet']));
+
+               
+
+                    // リツイートした投稿のページへ
                     $redirect_url = "index.php?page=" . $page;
-                    header("Location:" . $redirect_url);
-                    exit();
+                    header("Location:" . $redirect_url); exit();
             }
         }
                     //　リツイートしたユーザー名を表示するため、idとnameをペアにして配列として取得する
@@ -207,7 +238,7 @@ function makeLink($value) {
                     ?>
                     <!-- 表示するリツイート総数を取得 -->
                     <?php
-                    $ret_count = $db->prepare('SELECT COUNT(*) as retweetCounts FROM posts WHERE retweet_post_id = ?');
+                    $ret_count = $db->prepare('SELECT retweet_counts FROM posts where id = ?');
                     $ret_count->execute(array($post['id']));
                     $get_Retweet = $ret_count->fetch();
                     ?>
@@ -216,12 +247,12 @@ function makeLink($value) {
                     <?php if ($usersRetweetCheck['ret_cnt'] > 0): ?>
                         <div class="retweet_btn">
                         <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
-                        &page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweetCounts']); ?></p>
+                        &page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?></p>
                         </div>
                     <?php else : ?>
                         <div class="retweet_btn">
                         <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
-                        &page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweetCounts']); ?></p>
+                        &page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?></p>
                         </div>
                     <?php endif; ?>
             
