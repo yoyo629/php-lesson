@@ -3,13 +3,13 @@ session_start();
 
 require('dbconnect.php');
 if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
-	// ログインしている
+	// ログインチェック
 	$_SESSION['time'] = time();
 	$members = $db->prepare('SELECT * FROM members WHERE id=?');
 	$members->execute(array($_SESSION['id']));
 	$member = $members->fetch();
 } else {
-	// ログインしていない
+	// ログインしていない場合はログインページへ
 	header('Location: login.php'); exit();
 }
 // 投稿を記録する
@@ -45,27 +45,26 @@ if (!empty($_POST)) {
         $posts->bindParam(1, $start, PDO::PARAM_INT);
         $posts->execute();
 
-// 返信の場合
-if (isset($_REQUEST['res'])) {
-    $response = $db->prepare('SELECT m.name, m.picture, p.* FROM members m,	posts p WHERE m.id=p.member_id AND p.id=? ORDER BY p.created DESC');
-		$response->execute(array($_REQUEST['res']));
-		$table = $response->fetch();
-		$message = '@' . $table['name'] . ' ' . $table['message'];
-    }
+    // 返信の場合
+    if (isset($_REQUEST['res'])) {
+        $response = $db->prepare('SELECT m.name, m.picture, p.* FROM members m,	posts p WHERE m.id=p.member_id AND p.id=? ORDER BY p.created DESC');
+            $response->execute(array($_REQUEST['res']));
+            $table = $response->fetch();
+            $message = '@' . $table['name'] . ' ' . $table['message'];
+        }
 
+        // htmlspecialcharsのショートカット
+        function h($value) {
+            return htmlspecialchars($value, ENT_QUOTES);
+        }
 
-// htmlspecialcharsのショートカット
-function h($value) {
-    return htmlspecialchars($value, ENT_QUOTES);
-}
-
-// 本文内のURLにリンクを設定します
-function makeLink($value) {
-    return mb_ereg_replace("(https?)(://[[:alnum:]\+\$\;\?\.%,!#~*/:@&=_-]+)",'<a href="\1\2">\1\2</a>' , $value);
-}
+        // 本文内のURLにリンクを設定します
+        function makeLink($value) {
+            return mb_ereg_replace("(https?)(://[[:alnum:]\+\$\;\?\.%,!#~*/:@&=_-]+)",'<a href="\1\2">\1\2</a>' , $value);
+        }
 
 // いいね機能実装--------------------------------------------------------------------------------------
-//　いいねボタンが押されたとき
+//　いいね！されたとき
     if (isset($_REQUEST['good'])) {
         // いいね済みの投稿ではないかチェック
         $good = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
@@ -101,7 +100,7 @@ function makeLink($value) {
     }
 // いいね機能ここまで----------------------------------------------------------------------------------
 
-//　リツイート実装-------------------------------------------------------------------------------------
+//　リツイート機能-------------------------------------------------------------------------------------
     //　リツイートした場合
     if (isset($_REQUEST['retweet'])) {
         // リツイートする元ツイートを取得
@@ -166,8 +165,6 @@ function makeLink($value) {
                     $ret_getcounts['get_cnt'],
                     $_REQUEST['retweet']));
 
-               
-
                     // リツイートした投稿のページへ
                     $redirect_url = "index.php?page=" . $page;
                     header("Location:" . $redirect_url); exit();
@@ -177,6 +174,8 @@ function makeLink($value) {
                      $retweet_username = $db->query('SELECT id, name FROM members');
                      $retweet_username = $retweet_username->fetchAll(PDO::FETCH_KEY_PAIR);
                     // var_dump($rt_id_name);
+//　リツイート機能ここまで-------------------------------------------------------------------------------------
+
 ?>
 
 <!DOCTYPE html>
@@ -225,17 +224,7 @@ function makeLink($value) {
                     <?php if ($_SESSION['id'] == $post['member_id']): ?>
                         <p>[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]</p>
                     <?php endif; ?>
-
-                    <!-- 各投稿をログインユーザーがリツイートしているかチェック -->
-                    
-                    <?php
-                    $retweetCheck = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
-                    $retweetCheck->execute(array(
-                        $post['id'],
-                        $_SESSION['id']
-                    ));
-                    $usersRetweetCheck = $retweetCheck->fetch();
-                    ?>
+                
                     <!-- 表示するリツイート総数を取得 -->
                     <?php
                     $ret_count = $db->prepare('SELECT retweet_counts FROM posts where id = ?');
@@ -244,7 +233,7 @@ function makeLink($value) {
                     ?>
 
                     <!-- リツイートボタン実装　リツイートしていた場合 -->
-                    <?php if ($usersRetweetCheck['ret_cnt'] > 0): ?>
+                    <?php if ($retweet_cnt ['ret_cnt'] > 0): ?>
                         <div class="retweet_btn">
                         <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
                         &page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?></p>
@@ -258,7 +247,7 @@ function makeLink($value) {
             
                     <!-- 各投稿コメントにログインユーザーがいいねをしているかチェックする -->
                     <?php
-                    $usersGood = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
+                    $usersGood = $db->prepare('SELECT COUNT(*) AS good_cnt_check FROM good WHERE post_id = ? AND member_id = ?');
                     $usersGood->execute(array(
                         $post['id'],
                         $_SESSION['id']
@@ -266,7 +255,7 @@ function makeLink($value) {
                     $usersGoodCnt = $usersGood->fetch();
                     ?>
                     <!-- いいねボタン実装　ログインユーザーがいいねをしていた場合 -->
-                    <?php if ($usersGoodCnt['cnt'] > 0): ?>
+                    <?php if ($usersGoodCnt['good_cnt_check'] > 0): ?>
                         <div class="good_btn">
                             <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
                             <p><a href="index.php?good=<?php echo h($post['id']); ?>
