@@ -61,26 +61,25 @@ if (!empty($_POST)) {
         }
 
 // いいね機能実装--------------------------------------------------------------------------------------
-//　いいね！されたとき
+//　いいね！実行
     if (isset($_REQUEST['good'])) {
-        // いいね済みの投稿ではないかチェック
-        $good = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
-        $good->execute(array(
+        // ユーザーがいいね済みかチェック
+        $usersFindgood = $db->prepare('SELECT COUNT(*) AS cnt FROM good WHERE post_id = ? AND member_id = ?');
+        $usersFindgood->execute(array(
             $_REQUEST['good'],
             $_SESSION['id']
         ));
-        // 抽出された件数を代入
-        $good_comment = $good->fetch();
+        $good_check = $usersFindgood->fetch();
 
         // 抽出された投稿が新規の場合の処理と登録済の場合の処理
-        if ($good_comment['cnt'] < 1) {
-            // 新規の場合（いいね保存）
+        if ($good_check['cnt'] < 1) {
+            // いいねをしていない場合は登録
             $good_record = $db->prepare('INSERT INTO good SET post_id = ?, member_id = ?, created = NOW()');
             $good_record->execute(array(
                 $_REQUEST['good'],
                 $_SESSION['id']
             ));
-            // 各投稿のいいね総数を取得
+            // いいね総数を取得
             $get_good_cnt = $db->prepare('SELECT count(*) as good_count FROM posts as p JOIN good as g ON p.id = g.post_id WHERE g.post_id = ? GROUP BY p.id');
             $get_good_cnt->execute(array($_REQUEST['good']));
             $good_count = $get_good_cnt->fetch();
@@ -90,7 +89,7 @@ if (!empty($_POST)) {
                 $good_count['good_count'],
                 $_REQUEST['good']
             ));
-            // リツイートされている投稿のいいね数も更新する
+            // リツイートされた投稿のいいね数も元ツイートに合わせて更新
             $update_ret_good = $db->prepare('UPDATE good SET good_count = ? WHERE retweet_post_id = ?');
             $update_ret_good->execute(array(
                 $good_count['good_count'],
@@ -101,8 +100,8 @@ if (!empty($_POST)) {
             header("Location:" . $redirect_url); exit();
         } else {
             // いいね済の場合（いいね削除）
-            $good_del = $db->prepare('DELETE FROM good WHERE post_id = ? AND member_id = ?');
-            $good_del->execute(array(
+            $good_delete = $db->prepare('DELETE FROM good WHERE post_id = ? AND member_id = ?');
+            $good_delete->execute(array(
                 $_REQUEST['good'],
                 $_SESSION['id']
             ));
@@ -125,15 +124,15 @@ if (!empty($_POST)) {
         LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id AND p.id = ? ORDER BY p.created DESC');
         $getTweet->execute(array($_REQUEST['retweet']));
             $retweet_post = $getTweet->fetch();              
-        //　ログインユーザーがリツイート済みかチェック
-        $usersRetweet = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_member_id = ? AND retweet_post_id = ?');
-        $usersRetweet->execute(array(
+        //　ユーザーがリツイート済みかチェック
+        $usersFindret = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_member_id = ? AND retweet_post_id = ?');
+        $usersFindret->execute(array(
             $_SESSION['id'],
             $_REQUEST['retweet']
             ));
-            $retweet_cnt = $usersRetweet->fetch();
+            $retweet_check = $usersFindret->fetch();
             // ユーザーがリツイートしていなかった場合
-            if($retweet_cnt['ret_cnt'] < 1) {
+            if($retweet_check['ret_cnt'] < 1) {
                 $retweet_record = $db->prepare('INSERT INTO posts SET message = ?, member_id = ?,retweet_post_id = ?,retweet_member_id = ?, created = NOW()');
                 $retweet_record->execute(array(
                     $retweet_post['message'],
@@ -159,16 +158,16 @@ if (!empty($_POST)) {
                     $ret_getcounts['get_cnt'],
                     $_REQUEST['retweet']));
                 //  更新されたリツイート総数を同じくリツイートされている投稿に反映させる
-                $same_ret_update = $db->prepare('UPDATE posts SET retweet_counts = ? where retweet_post_id = ?');
-                $same_ret_update->execute(array(
+                $same_update_ret = $db->prepare('UPDATE posts SET retweet_counts = ? where retweet_post_id = ?');
+                $same_update_ret->execute(array(
                     $ret_getcounts['get_cnt'],
                     $_REQUEST['retweet']));
     
                     header('Location: index.php'); exit();
             } else {
                 // リツイートしていた場合は削除
-                $retweet_del = $db->prepare('DELETE FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
-                $retweet_del->execute(array(
+                $retweet_delete = $db->prepare('DELETE FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
+                $retweet_delete->execute(array(
                     $_REQUEST['retweet'],
                     $_SESSION['id']
                     ));
@@ -207,7 +206,7 @@ if (!empty($_POST)) {
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>ひとこと掲示板</title>
         <link rel="stylesheet" href="./css/style.css" />
-    </head>
+        </head>
         <body>
             <div id="wrap">
                 <div id="head">
@@ -243,45 +242,37 @@ if (!empty($_POST)) {
                             <?php if ($_SESSION['id'] == $post['member_id']): ?>
                                 <p>[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]</p>
                             <?php endif; ?>
-                        
                                 <!-- 表示するリツイート総数を取得 -->
                                 <?php
                                 $ret_count = $db->prepare('SELECT retweet_counts FROM posts where id = ?');
                                 $ret_count->execute(array($post['id']));
                                 $get_Retweet = $ret_count->fetch();
                                 ?>
-
                             <!-- リツイートボタン実装　リツイートしていた場合 -->
                             <?php if ($get_Retweet['retweet_counts'] > 0): ?>
                                 <div class="retweet_btn">
-                                <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
-                                &page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?></p>
+                                <a href="index.php?retweet=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?>
                                 </div>
                             <?php else : ?>
                                 <div class="retweet_btn">
-                                <p><a href="index.php?retweet=<?php echo h($post['id']); ?>
-                                &page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?></p>
+                                <a href="index.php?retweet=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?>
                                 </div>
                             <?php endif; ?>
-
                                 <?php
-                                $goodCount = $db->prepare('SELECT good_count FROM good WHERE post_id = ? GROUP BY post_id');
+                                $goodCount = $db->prepare('SELECT p.*,ifnull(g.good_count,0) as good_count FROM posts as p LEFT JOIN good as g ON p.id = g.post_id WHERE p.id = ? GROUP BY g.post_id');
                                 $goodCount->execute(array($post['id']));
                                 $all_Goodcnt = $goodCount->fetch();
                                 ?>
-
                             <!-- いいねボタン実装　ログインユーザーがいいねをしていた場合 -->
                             <?php if ($all_Goodcnt['good_count'] > 0): ?>
                                 <div class="good_btn">
                                     <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
-                                    <p><a href="index.php?good=<?php echo h($post['id']); ?>
-                                    &page=<?php echo h($page); ?>"style="color:pink;">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?></p>
+                                <a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:pink;">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?>
                                 </div>
                             <!-- いいねをしていない場合 -->
                             <?php else : ?>
                                 <div class="good_btn">
-                                    <p><a href="index.php?good=<?php echo h($post['id']); ?>
-                                    &page=<?php echo h($page); ?>">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?></p>
+                                <a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?>
                                 </div>
                             <?php endif; ?>
                     
