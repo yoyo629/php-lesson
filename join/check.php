@@ -18,6 +18,7 @@ if (!empty($_POST)) {
             $_SESSION['join']['image']
         ));
         unset($_SESSION['join']);
+
         header('Location: thanks.php');
         exit();
 }
@@ -58,7 +59,7 @@ if (!empty($_POST)) {
             </dd>
             <dt>写真など</dt>
             <dd>
-            <img src="../member_picture/<?php echo htmlspecialchars($_SESSION['join']['image'],ENT_QUOTES); ?>" width="100" height="100" alt="" />
+            <img src="../member_picture/<?php echo $_SESSION['join']['image']; ?>" width="100" height="100" alt="" />
             </dd>
         </dl>
         <div><a href="index.php?action=rewrite"><&laquo;&nbsp;書き直す</a> | <input type="submit" value="登録する" /></div>

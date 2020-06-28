@@ -11,7 +11,11 @@ if (!empty($_POST)) {
     }
     if ($_POST['email'] === '') {
         $error['email'] = 'blank';
+    }    
+    if(!preg_match("/^([a-zA-Z0-9])+([a-zA-Z0-9\?\*\[|\]%'=~^\{\}\/\+!#&\$\._-])*@([a-zA-Z0-9_-])+\.([a-zA-Z0-9\._-]+)+$/",$_POST['email'])){
+        $error['email'] = 'error';
     }
+  
     //パスワードが4文字以下の時にエラー処理
     if (strlen($_POST['password']) < 4) {
         $error['password'] = 'length';
@@ -93,6 +97,9 @@ if ($_REQUEST['action'] == 'rewrite') {
                 <?php endif; ?>
                 <?php if ($error['email'] == 'duplicate'): ?>
                 <p class="error"> *　指定されたメールアドレスは既に登録されています。</p>
+                <?php endif; ?>
+                <?php if ($error['email'] == 'error'): ?>
+                <p class="error"> *　正式なメールアドレスを入力してください。</p>
                 <?php endif; ?>
             </dd>
             <dt>パスワード<span class="required">必須</span></dt>
