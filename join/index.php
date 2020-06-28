@@ -22,7 +22,7 @@ if (!empty($_POST)) {
     //画像ファイルチェック
     $fileName = $_FILES['image']['name'];
     if (!empty($fileName)) {
-        $ext = substr($fileName, -3);//後ろから3文字を切り出して拡張子の確認
+        $ext = substr($fileName, -3);
         if ($ext != 'jpg' && $ext != 'gif') {
             $error['image'] === 'type';
         }
@@ -66,7 +66,7 @@ if ($_REQUEST['action'] == 'rewrite') {
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>ひとこと掲示板</title>
-	<link rel="stylesheet" href="style.css" />
+	<link rel="stylesheet" href="../css/style.css" />
 </head>
 
 <body>
@@ -78,14 +78,14 @@ if ($_REQUEST['action'] == 'rewrite') {
     <p>次のフォームに必要事項を入力してください。</p>
     <form action="" method="post" enctype="multipart/form-data">
         <dl>
-            <dt>ニックネーム<span class="required">必要</span></dt>
+            <dt>ニックネーム<span class="required">必須</span></dt>
             <dd>
                 <input type="text" name="name" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['name'], ENT_QUOTES); ?>" />
                 <?php if($error['name'] === 'blank'): ?>
                 <p class="error"> *　ニックネームを入力してください</p>
                 <?php endif; ?>
             </dd>
-            <dt>メールアドレス<span class="required">必要</span></dt>
+            <dt>メールアドレス<span class="required">必須</span></dt>
             <dd>
                 <input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['email'], ENT_QUOTES); ?>" />
                 <?php if($error['email'] === 'blank'): ?>
@@ -95,7 +95,7 @@ if ($_REQUEST['action'] == 'rewrite') {
                 <p class="error"> *　指定されたメールアドレスは既に登録されています。</p>
                 <?php endif; ?>
             </dd>
-            <dt>パスワード<span class="required">必要</span></dt>
+            <dt>パスワード<span class="required">必須</span></dt>
             <dd>
                 <input type="text" name="password" size="10" maxlength="20" value="<?php echo htmlspecialchars($_POST['password'],ENT_QUOTES); ?>" />
                 <?php if($error['password'] === 'blank'): ?>
@@ -109,8 +109,7 @@ if ($_REQUEST['action'] == 'rewrite') {
             <dd>
                 <input type="file" name="image" size="35" />
                 <?php if ($error['image'] == 'type'): ?>
-                <p class="error"> *　写真などは「.gif」「.jpg」の画像を
-                指定してください</p>
+                <p class="error"> *　写真などは「.gif」「.jpg」の画像を指定してください</p>
                 <?php endif; ?>
                 <?php if (!empty($error)): ?>
                 <p class="error"> *　恐れ入りますが、画像を再指定してください。</p>
