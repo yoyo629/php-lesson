@@ -205,7 +205,7 @@ if (!empty($_POST)) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>ひとこと掲示板</title>
-        <link rel="stylesheet" href="./css/style.css" />
+        <link rel="stylesheet" href="css/style.css" />
         </head>
         <body>
             <div id="wrap">
@@ -230,14 +230,18 @@ if (!empty($_POST)) {
                         <?php foreach ($posts as $post): ?>
                             <div class="msg">
                                 <!-- リツイートされたメッセージを表示 -->
-                                <?php if ($post['retweet_post_id'] > 0): ?><p><?php echo h($retweet_username[$post['retweet_member_id']]); ?>さんがリツイート</p><?php endif; ?>
-                                <img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
+                            <?php if ($post['retweet_post_id'] > 0): ?>
+                　              <p><?php echo h($retweet_username[$post['retweet_member_id']]); ?>さんがリツイート</p>
+                            <?php endif; ?>
+                                <img src="member_picture/<?php echo h($post['picture']); ?>" width="40" height="40" alt="<?php echo h($post['name']); ?>" />
                                 <?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>)</span>
                                 [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
                                 <p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a></p>
                             <!-- 返信の場合 -->
                             <?php if ($post['reply_post_id'] > 0): ?>
+                                <div class='reply'>
                                 <p><a href="view.php?id=<?php echo h($post['reply_post_id']); ?>">返信元のメッセージ</a></p>
+                                </div>
                             <?php endif; ?>
                             <?php if ($_SESSION['id'] == $post['member_id']): ?>
                                 <p>[<a href="delete.php?id=<?php echo h($post['id']); ?>" style="color:#F33;">削除</a>]</p>

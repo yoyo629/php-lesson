@@ -114,7 +114,7 @@ if ($_REQUEST['action'] == 'rewrite') {
             </dd>
             <dt>写真など</dt>
             <dd>
-                <input type="file" name="image" size="35" value="test" />
+                <input type="file" name="image" size="35"/>
                 <?php if ($error['image'] == 'type'): ?>
                 <p class="error"> *　写真などは「.gif」「.jpg」の画像を指定してください</p>
                 <?php endif; ?>

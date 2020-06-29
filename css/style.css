@@ -143,17 +143,17 @@ li {
 	font-size: 80%;
 	color: #999;
 }
+.reply p {
+	padding-top: 25px;
+}
+
 .retweet_btn a {
 	text-decoration: none;
 	padding-left: 0;
 }
-.good_btn {
-	padding-left: 55px;
-}
 .good_btn a {
 	text-decoration: none;
-	float:left;
 }
 .paging {
-	padding-top: 30px;
+	padding-top: 50px;
 }
