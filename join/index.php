@@ -1,15 +1,14 @@
 <?php
 require('../dbconnect.php');
-
 session_start();
 
 //フォーム送信されたかどうかの確認処理
 if (!empty($_POST)) {
     //エラー項目の確認（会員登録フォームに入力された内容が空かどうか判定）
-    if ($_POST['name'] === '') {
+    if ($_POST['name'] == '') {
         $error['name'] = 'blank';
     }
-    if ($_POST['email'] === '') {
+    if ($_POST['email'] == '') {
         $error['email'] = 'blank';
     }    
     if(!preg_match("/^([a-zA-Z0-9])+([a-zA-Z0-9\?\*\[|\]%'=~^\{\}\/\+!#&\$\._-])*@([a-zA-Z0-9_-])+\.([a-zA-Z0-9\._-]+)+$/",$_POST['email'])){
@@ -20,7 +19,7 @@ if (!empty($_POST)) {
     if (strlen($_POST['password']) < 4) {
         $error['password'] = 'length';
     }
-    if ($_POST['password'] === '') {
+    if ($_POST['password'] == '') {
         $error['password'] = 'blank';
     }
     //画像ファイルチェック
@@ -46,7 +45,6 @@ if (!empty($_POST)) {
         //画像アップロード
         $image = date('YmdHis') . $_FILES['image']['name'];
         move_uploaded_file($_FILES['image']['tmp_name'], '../member_picture/' .$image);
-
         $_SESSION['join'] = $_POST;
         $_SESSION['join']['image'] = $image;
         header('Location: check.php');
@@ -57,7 +55,7 @@ if (!empty($_POST)) {
 //　書き直し
 if ($_REQUEST['action'] == 'rewrite') {
     $_POST = $_SESSION['join'];
-    $error['rewrite'] = true; //画像指定エラーを表示させるための処理
+    $error['rewrite'] = true;
 }
 ?>
 
@@ -104,17 +102,17 @@ if ($_REQUEST['action'] == 'rewrite') {
             </dd>
             <dt>パスワード<span class="required">必須</span></dt>
             <dd>
-                <input type="text" name="password" size="10" maxlength="20" value="<?php echo htmlspecialchars($_POST['password'],ENT_QUOTES); ?>" />
-                <?php if($error['password'] === 'blank'): ?>
+                <input type="password" name="password" size="10" maxlength="20" value="<?php echo htmlspecialchars($_POST['password'],ENT_QUOTES); ?>" />
+                <?php if($error['password'] == 'blank'): ?>
                 <p class="error"> *　パスワードを入力してください</p>
                 <?php endif; ?>
-                <?php if ($error['password'] === 'length'): ?>
+                <?php if ($error['password'] == 'length'): ?>
                 <p class="error"> *　パスワードは4文字以上です。</p>   
                 <?php endif; ?>
             </dd>
             <dt>写真など</dt>
             <dd>
-                <input type="file" name="image" size="35"/>
+                <input type="file" name="image" size="35" />
                 <?php if ($error['image'] == 'type'): ?>
                 <p class="error"> *　写真などは「.gif」「.jpg」の画像を指定してください</p>
                 <?php endif; ?>

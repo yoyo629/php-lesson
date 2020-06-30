@@ -231,7 +231,7 @@ if (!empty($_POST)) {
                             <div class="msg">
                                 <!-- リツイートされたメッセージを表示 -->
                             <?php if ($post['retweet_post_id'] > 0): ?>
-                　              <p><?php echo h($retweet_username[$post['retweet_member_id']]); ?>さんがリツイート</p>
+                              <p><?php echo h($retweet_username[$post['retweet_member_id']]); ?>さんがリツイート</p>
                             <?php endif; ?>
                                 <img src="member_picture/<?php echo h($post['picture']); ?>" width="40" height="40" alt="<?php echo h($post['name']); ?>" />
                                 <?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>)</span>
