@@ -122,9 +122,6 @@ if ($_REQUEST['action'] === 'rewrite') {
         <div><input type="submit" value="入力内容を確認する" /></div>
     </form>        
   </div>
-<?php
-  var_dump($fileName);
-?>
 </div>
 </body>
 </html>

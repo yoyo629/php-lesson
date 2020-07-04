@@ -57,23 +57,17 @@ if (!empty($_POST)) {
             【表示されません】
             </dd>
             <dt>写真など</dt>
-            <?php if(preg_match('/jpg/'&&'/png/',$_SESSION['join']['image'])): ?>
+            <?php if(preg_match('/\.png$|\.jpg$/i',$_SESSION['join']['image'])): ?>
             <dd>
             <img src="../member_picture/<?php echo htmlspecialchars($_SESSION['join']['image'], ENT_QUOTES); ?>" width="100" height="100" alt="" />
             </dd>
             <?php else: ?>
-            <dd>
-            【画像登録なし】
-            </dd>
+            <dd>画像無し</dd>
             <?php endif; ?>
         </dl>
         <div><a href="index.php?action=rewrite"><&laquo;&nbsp;書き直す</a> | <input type="submit" value="登録する" /></div>
     </form>        
   </div>
-  <?php
-  var_dump($_SESSION);
-  ?>
-
 </div>
 </body>
 </html>
