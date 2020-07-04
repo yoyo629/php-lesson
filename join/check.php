@@ -30,7 +30,7 @@ if (!empty($_POST)) {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>ひとこと掲示板</title>
+	<title>会員登録</title>
 	<link rel="stylesheet" href="../css/style.css" />
 </head>
 
@@ -57,13 +57,22 @@ if (!empty($_POST)) {
             【表示されません】
             </dd>
             <dt>写真など</dt>
+            <?php if(preg_match('/jpg/'&&'/png/',$_SESSION['join']['image'])): ?>
             <dd>
             <img src="../member_picture/<?php echo htmlspecialchars($_SESSION['join']['image'], ENT_QUOTES); ?>" width="100" height="100" alt="" />
             </dd>
+            <?php else: ?>
+            <dd>
+            【画像登録なし】
+            </dd>
+            <?php endif; ?>
         </dl>
         <div><a href="index.php?action=rewrite"><&laquo;&nbsp;書き直す</a> | <input type="submit" value="登録する" /></div>
     </form>        
   </div>
+  <?php
+  var_dump($_SESSION);
+  ?>
 
 </div>
 </body>

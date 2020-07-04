@@ -28,7 +28,7 @@ if (!empty($_POST)) {
         $ext = substr($fileName, -3);
         if ($ext != 'jpg' && $ext != 'gif') {
             $error['image'] = 'type';
-        }
+      }        
     }
 
     //　重複アカウントのチェック
@@ -53,13 +53,11 @@ if (!empty($_POST)) {
 }
 
 //　書き直し
-if ($_REQUEST['action'] == 'rewrite') {
+if ($_REQUEST['action'] === 'rewrite') {
     $_POST = $_SESSION['join'];
     $error['rewrite'] = true;
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -67,7 +65,7 @@ if ($_REQUEST['action'] == 'rewrite') {
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>ひとこと掲示板</title>
+	<title>会員登録</title>
 	<link rel="stylesheet" href="../css/style.css" />
 </head>
 
@@ -93,27 +91,27 @@ if ($_REQUEST['action'] == 'rewrite') {
                 <?php if($error['email'] === 'blank'): ?>
                 <p class="error"> *　メールアドレスを入力してください</p>
                 <?php endif; ?>
-                <?php if ($error['email'] == 'duplicate'): ?>
+                <?php if ($error['email'] === 'duplicate'): ?>
                 <p class="error"> *　指定されたメールアドレスは既に登録されています。</p>
                 <?php endif; ?>
-                <?php if ($error['email'] == 'error'): ?>
+                <?php if ($error['email'] === 'error'): ?>
                 <p class="error"> *　正式なメールアドレスを入力してください。</p>
                 <?php endif; ?>
             </dd>
             <dt>パスワード<span class="required">必須</span></dt>
             <dd>
                 <input type="password" name="password" size="10" maxlength="20" value="<?php echo htmlspecialchars($_POST['password'],ENT_QUOTES); ?>" />
-                <?php if($error['password'] == 'blank'): ?>
+                <?php if($error['password'] === 'blank'): ?>
                 <p class="error"> *　パスワードを入力してください</p>
                 <?php endif; ?>
-                <?php if ($error['password'] == 'length'): ?>
+                <?php if ($error['password'] === 'length'): ?>
                 <p class="error"> *　パスワードは4文字以上です。</p>   
                 <?php endif; ?>
             </dd>
             <dt>写真など</dt>
             <dd>
                 <input type="file" name="image" size="35" />
-                <?php if ($error['image'] == 'type'): ?>
+                <?php if ($error['image'] === 'type'): ?>
                 <p class="error"> *　写真などは「.gif」「.jpg」の画像を指定してください</p>
                 <?php endif; ?>
                 <?php if (!empty($error)): ?>
@@ -124,7 +122,9 @@ if ($_REQUEST['action'] == 'rewrite') {
         <div><input type="submit" value="入力内容を確認する" /></div>
     </form>        
   </div>
-
+<?php
+  var_dump($fileName);
+?>
 </div>
 </body>
 </html>
