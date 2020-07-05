@@ -233,7 +233,11 @@ if (!empty($_POST)) {
                             <?php if ($post['retweet_post_id'] > 0): ?>
                               <p><?php echo h($retweet_username[$post['retweet_member_id']]); ?>さんがリツイート</p>
                             <?php endif; ?>
+                            <?php if(preg_match('/\.png$|\.jpg$/i',$post['picture'])): ?>
                                 <img src="member_picture/<?php echo h($post['picture']); ?>" width="40" height="40" alt="<?php echo h($post['name']); ?>" />
+                            <?php else: ?>
+                                <p>【Noimage】</p>
+                            <?php endif; ?>
                                 <?php echo makeLink(h($post['message']));?><span class="name">（<?php echo h($post['name']); ?>)</span>
                                 [<a href="index.php?res=<?php echo h($post['id']); ?>">Re</a>]</p>
                                 <p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a></p>
@@ -279,7 +283,6 @@ if (!empty($_POST)) {
                                 <a href="index.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?>
                                 </div>
                             <?php endif; ?>
-                    
                             </div>
                         <?php endforeach; ?>
                         
