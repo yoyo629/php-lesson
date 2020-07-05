@@ -2,12 +2,10 @@
 session_start();
 require('../dbconnect.php');
 
-//セッションに値が無い時は会員登録画面へ遷移
 if (!isset($_SESSION['join'])) {
     header('Location: index.php');
     exit();
 }
-
 if (!empty($_POST)) {
     //登録処理をする
     $statement = $db->prepare('INSERT INTO members SET name = ?, email = ?, password = ?, picture = ?, created = NOW()');
