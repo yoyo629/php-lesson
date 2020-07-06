@@ -131,8 +131,13 @@ if (!empty($_POST)) {
             $_REQUEST['retweet']
             ));
             $retweet_check = $usersFindret->fetch();
+        // ログインユーザーがリツイートした投稿ではないかチェック    
+        $findRet = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE id = ?');
+        $findRet->execute(array($retweet_post['retweet_post_id']));
+            $retCheck = $findRet->fetch();
+        
             // ユーザーがリツイートしていなかった場合
-            if($retweet_check['ret_cnt'] < 1) {
+            if($retweet_check['ret_cnt'] < 1 && $retCheck['ret_cnt'] < 1) {
                 $retweet_record = $db->prepare('INSERT INTO posts SET message = ?, member_id = ?,retweet_post_id = ?,retweet_member_id = ?, created = NOW()');
                 $retweet_record->execute(array(
                     $retweet_post['message'],
@@ -165,30 +170,38 @@ if (!empty($_POST)) {
     
                     header('Location: index.php'); exit();
             } else {
-                // リツイートしていた場合は削除
+                $retdelete = $db->prepare('DELETE FROM posts WHERE id = ? AND retweet_member_id = ?');
+                $retdelete->execute(array(
+                    $_REQUEST['retweet'],
+                    $_SESSION['id']
+                ));
+                // リツイートしていた場合は取り消し
                 $retweet_delete = $db->prepare('DELETE FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
                 $retweet_delete->execute(array(
                     $_REQUEST['retweet'],
                     $_SESSION['id']
-                    ));
+                )); 
                 //  いいねテーブルの上記リツイート情報も削除
                 $retweet_good_del = $db->prepare('DELETE FROM good WHERE retweet_post_id = ? AND member_id = ?');
                 $retweet_good_del->execute(array(
                     $_REQUEST['retweet'],
                     $_SESSION['id']
                     ));
-                // リツイートを取り消しされた場合にリツイート数も合わせて更新する
-                $del_ret_count = $db->prepare('SELECT COUNT(*) as get_cnt from posts where retweet_post_id = ?');
-                $del_ret_count->execute(array($_REQUEST['retweet']));
-                $del_ret_counts = $del_ret_count->fetch();
 
                 $del_same_ret = $db->prepare('UPDATE posts SET retweet_counts = ? where id = ?');
                 $del_same_ret->execute(array(
                     $ret_getcounts['get_cnt'],
                     $_REQUEST['retweet']));
-            
+                 
+                $del_same_ret = $db->prepare('UPDATE posts SET retweet_counts = ? where id = ?');
+                $del_same_ret->execute(array(
+                    $ret_getcounts['get_cnt'],
+                    $retweet_post['id']));
+
+
                     // リツイートした投稿のページへ
                     $redirect_url = "index.php?page=" . $page;
+
                     header("Location:" . $redirect_url); exit();
             }
         }
