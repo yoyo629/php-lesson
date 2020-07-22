@@ -60,9 +60,9 @@ if (!empty($_POST)) {
             return mb_ereg_replace("(https?)(://[[:alnum:]\+\$\;\?\.%,!#~*/:@&=_-]+)",'<a href="\1\2">\1\2</a>' , $value);
         }
 
-        //　リツイートしたユーザー名を表示するため、idとnameをペアにして配列として取得する
-        $retweet_username = $db->query('SELECT id, name FROM members');
-        $retweet_username = $retweet_username->fetchAll(PDO::FETCH_KEY_PAIR);
+    //　リツイートしたユーザー名を表示するため、idとnameをペアにして配列として取得する
+    $retweet_username = $db->query('SELECT id, name FROM members');
+    $retweet_username = $retweet_username->fetchAll(PDO::FETCH_KEY_PAIR);
 ?>
 
 <!DOCTYPE html>
@@ -119,10 +119,11 @@ if (!empty($_POST)) {
                             <?php endif; ?>
                                 <!-- 表示するリツイート総数を取得 -->
                                 <?php
+                                // リツイート総数
                                 $ret_count = $db->prepare('SELECT retweet_counts FROM posts where id = ?');
                                 $ret_count->execute(array($post['id']));
                                 $get_Retweet = $ret_count->fetch();
-
+                                // リツイートボタンの表示状態変更に伴うチェック
                                 $ret_user = $db->prepare('SELECT * FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
                                 $ret_user->execute(array($post['id'],$_SESSION['id']));
                                 $ret_btn = $ret_user->fetch();
@@ -133,19 +134,20 @@ if (!empty($_POST)) {
                                 ?>
                             <!-- リツイートボタン実装　リツイートしていた場合 -->
                             <?php if (isset($ret_btn['retweet_counts']) || isset($retweet_btn['retweet_counts'])): ?>
-                                <div class="retweet_btn">
-                                <a href="retweet.php?retweet=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?>
-                                </div>
+                              <div class="retweet_btn">
+                                 <a href="retweet.php?retweet=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?>
+                              </div>
                             <?php else : ?>
-                                <div class="retweet_btn">
-                                <a href="retweet.php?retweet=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?>
-                                </div>
+                              <div class="retweet_btn">
+                                 <a href="retweet.php?retweet=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?>
+                              </div>
                             <?php endif; ?>
                                 <?php
+                                // いいね総数
                                 $goodCount = $db->prepare('SELECT p.*,ifnull(g.good_count,0) as good_count FROM posts as p LEFT JOIN good as g ON p.id = g.post_id WHERE p.id = ? GROUP BY g.post_id');
                                 $goodCount->execute(array($post['id']));
                                 $all_Goodcnt = $goodCount->fetch();
-
+                                // いいねボタンの表示状態変更に伴うチェック
                                 $good_user = $db->prepare('SELECT * FROM good WHERE post_id = ? AND member_id = ?');
                                 $good_user->execute(array($post['id'],$_SESSION['id']));
                                 $good_btn = $good_user->fetch();
@@ -156,15 +158,14 @@ if (!empty($_POST)) {
                                 ?>
                             <!-- いいねボタン実装　ログインユーザーがいいねをしていた場合 -->
                             <?php if (isset($good_btn['good_count']) && $good_btn['retweet_post_id'] < 1 || isset($ret_good_btn['good_count'])): ?>
-                                <div class="good_btn">
-                                    <!-- 投稿コメントのIDをリクエストパラメータへ & いいね数表示 -->
+                              <div class="good_btn">
                                 <a href="good.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:pink;">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?>
-                                </div>
+                              </div>
                             <!-- いいねをしていない場合 -->
                             <?php else : ?>
-                                <div class="good_btn">
+                              <div class="good_btn">
                                 <a href="good.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?>
-                                </div>
+                              </div>
                             <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
