@@ -10,27 +10,26 @@ if (!empty($_POST)) {
     //登録処理をする
     $statement = $db->prepare('INSERT INTO members SET name = ?, email = ?, password = ?, picture = ?, created = NOW()');
     $ret = $statement->execute(array(
-          $_SESSION['join']['name'],
-          $_SESSION['join']['email'],
-          sha1($_SESSION['join']['password']),
-          $_SESSION['join']['image']
+        $_SESSION['join']['name'],
+        $_SESSION['join']['email'],
+        sha1($_SESSION['join']['password']),
+        $_SESSION['join']['image']
     ));
-          unset($_SESSION['join']);
+    unset($_SESSION['join']);
         
-          header('Location: thanks.php');
-          exit();
+    header('Location: thanks.php');
+    exit();
 }
-
 ?>
 
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>会員登録</title>
-	<link rel="stylesheet" href="../css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>会員登録</title>
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 
 <body>
@@ -38,35 +37,35 @@ if (!empty($_POST)) {
   <div id="head">
     <h1>会員登録</h1>
   </div>
-  <div id="content">
-    <p>記入した内容を確認して、「登録する」をクリックしてください</p>
-    <form action="" method="post">
-        <input type="hidden" name="action" value="submit" />
-        <dl>
-            <dt>ニックネーム</dt>
-            <dd>
-            <?php echo htmlspecialchars($_SESSION['join']['name'], ENT_QUOTES); ?>
-            </dd>
-            <dt>メールアドレス</dt>
-            <dd>
-            <?php echo htmlspecialchars($_SESSION['join']['email'], ENT_QUOTES); ?>
-            </dd>
-            <dt>パスワード</dt>
-            <dd>
-            【表示されません】
-            </dd>
-            <dt>写真など</dt>
-            <?php if(preg_match('/\.png$|\.jpg$/i',$_SESSION['join']['image'])): ?>
-            <dd>
-            <img src="../member_picture/<?php echo htmlspecialchars($_SESSION['join']['image'], ENT_QUOTES); ?>" width="100" height="100" alt="" />
-            </dd>
-            <?php else: ?>
-            <dd>画像無し</dd>
-            <?php endif; ?>
-        </dl>
-        <div><a href="index.php?action=rewrite"><&laquo;&nbsp;書き直す</a> | <input type="submit" value="登録する" /></div>
-    </form>        
+    <div id="content">
+      <p>記入した内容を確認して、「登録する」をクリックしてください</p>
+      <form action="" method="post">
+          <input type="hidden" name="action" value="submit" />
+          <dl>
+              <dt>ニックネーム</dt>
+              <dd>
+              <?php echo htmlspecialchars($_SESSION['join']['name'], ENT_QUOTES); ?>
+              </dd>
+              <dt>メールアドレス</dt>
+              <dd>
+              <?php echo htmlspecialchars($_SESSION['join']['email'], ENT_QUOTES); ?>
+              </dd>
+              <dt>パスワード</dt>
+              <dd>
+              【表示されません】
+              </dd>
+              <dt>写真など</dt>
+              <?php if(preg_match('/\.png$|\.jpg$/i',$_SESSION['join']['image'])): ?>
+              <dd>
+              <img src="../member_picture/<?php echo htmlspecialchars($_SESSION['join']['image'], ENT_QUOTES); ?>" width="100" height="100" alt="" />
+              </dd>
+              <?php else: ?>
+              <dd>画像無し</dd>
+              <?php endif; ?>
+          </dl>
+          <div><a href="index.php?action=rewrite"><&laquo;&nbsp;書き直す</a> | <input type="submit" value="登録する" /></div>
+      </form>        
+    </div>
   </div>
-</div>
 </body>
 </html>
