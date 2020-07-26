@@ -2,6 +2,14 @@
 session_start();
 require('dbconnect.php');
 
+// バリデーション実装(1-9の文字列を検証)
+if(isset($_REQUEST['good'])) {
+    if(!preg_match("/^[1-9]+$/",$_REQUEST['good'])) {
+        echo '不正な入力です';
+        exit();
+    }
+}
+
 //　いいね！実行
 if (isset($_REQUEST['good'])) {
     // いいねした投稿情報を取得
