@@ -8,10 +8,12 @@ if(isset($_REQUEST['good'])) {
         echo '不正な入力です';
         exit();
     }
+} else {
+    echo '不正な入力です';
 }
 
 //　いいね！実行
-if (isset($_REQUEST['good'])) {
+if ($_REQUEST['good']) {
     // いいねした投稿情報を取得
     $tweet_info = $db->prepare('SELECT * FROM posts WHERE id = ?');
     $tweet_info->execute(array($_REQUEST['good']));

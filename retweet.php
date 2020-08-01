@@ -8,10 +8,12 @@ if(isset($_REQUEST['retweet'])) {
         echo '不正な入力です';
         exit();
     }
+} else {
+    echo '不正な入力です';
 }
 
 //　リツイートした場合
-if (isset($_REQUEST['retweet'])) {
+if ($_REQUEST['retweet']) {
     // 投稿情報を取得
     $getTweet = $db->prepare('SELECT m.name, m.picture, p.*,count(g.good_count) as good_count FROM members m, posts p
     LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id AND p.id = ? ORDER BY p.created DESC');
