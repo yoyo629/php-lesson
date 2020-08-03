@@ -132,7 +132,7 @@ if (!empty($_POST)) {
                                 $retweet_user->execute(array($post['retweet_post_id'],$_SESSION['id']));
                                 $retweet_btn = $retweet_user->fetch();
                                 ?>
-                            <!-- リツイートボタン実装　リツイートしていた場合 -->
+                            <!-- リツイートボタン実装 リツイートしていた場合 -->
                             <?php if (isset($ret_btn['retweet_counts']) || isset($retweet_btn['retweet_counts'])): ?>
                               <div class="retweet_btn">
                                  <a href="retweet.php?retweet=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:green;">リツイート</a><?php echo h($get_Retweet['retweet_counts']); ?>
@@ -144,9 +144,9 @@ if (!empty($_POST)) {
                             <?php endif; ?>
                                 <?php
                                 // いいね総数
-                                $goodCount = $db->prepare('SELECT p.*,ifnull(g.good_count,0) as good_count FROM posts as p LEFT JOIN good as g ON p.id = g.post_id WHERE p.id = ? GROUP BY g.post_id');
-                                $goodCount->execute(array($post['id']));
-                                $all_Goodcnt = $goodCount->fetch();
+                                $good_count = $db->prepare('SELECT p.*,ifnull(g.good_count,0) as good_count FROM posts as p LEFT JOIN good as g ON p.id = g.post_id WHERE p.id = ? GROUP BY g.post_id');
+                                $good_count->execute(array($post['id']));
+                                $all_good_cnt = $good_count->fetch();
                                 // いいねボタンの表示状態変更に伴うチェック
                                 $good_user = $db->prepare('SELECT * FROM good WHERE post_id = ? AND member_id = ?');
                                 $good_user->execute(array($post['id'],$_SESSION['id']));
@@ -156,15 +156,15 @@ if (!empty($_POST)) {
                                 $ret_good_user->execute(array($post['retweet_post_id'],$_SESSION['id']));
                                 $ret_good_btn = $ret_good_user->fetch();
                                 ?>
-                            <!-- いいねボタン実装　ログインユーザーがいいねをしていた場合 -->
+                            <!-- いいねボタン実装 ログインユーザーがいいねをしていた場合 -->
                             <?php if (isset($good_btn['good_count']) && $good_btn['retweet_post_id'] < 1 || isset($ret_good_btn['good_count'])): ?>
                               <div class="good_btn">
-                                <a href="good.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:pink;">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?>
+                                <a href="good.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>"style="color:pink;">いいね!</a><?php echo h($all_good_cnt['good_count']); ?>
                               </div>
                             <!-- いいねをしていない場合 -->
                             <?php else : ?>
                               <div class="good_btn">
-                                <a href="good.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">いいね!</a><?php echo h($all_Goodcnt['good_count']); ?>
+                                <a href="good.php?good=<?php echo h($post['id']); ?>&page=<?php echo h($page); ?>">いいね!</a><?php echo h($all_good_cnt['good_count']); ?>
                               </div>
                             <?php endif; ?>
                             </div>

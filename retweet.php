@@ -21,10 +21,10 @@ try {
     //　リツイートした場合
     if ($_REQUEST['retweet']) {
         // 投稿情報を取得
-        $getTweet = $db->prepare('SELECT m.name, m.picture, p.*,count(g.good_count) as good_count FROM members m, posts p
+        $get_tweet = $db->prepare('SELECT m.name, m.picture, p.*,count(g.good_count) as good_count FROM members m, posts p
         LEFT JOIN good g ON p.id = g.post_id WHERE m.id = p.member_id AND p.id = ? ORDER BY p.created DESC');
-        $getTweet->execute(array($_REQUEST['retweet']));
-        $retweet_main_info = $getTweet->fetch();
+        $get_tweet->execute(array($_REQUEST['retweet']));
+        $retweet_main_info = $get_tweet->fetch();
         
         // 上記で取得した投稿情報のretweet_post_idから元ツイート情報を取得
         $get_tweet_info = $db->prepare('SELECT m.name, m.picture, p.*,count(g.good_count) as good_count FROM members m, posts p
@@ -33,14 +33,14 @@ try {
         $tweet_info = $get_tweet_info->fetch();
 
         //　ログインユーザーのIDとリツイートした投稿のIDを検索
-        $usersFindret = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
-        $usersFindret->execute(array($_REQUEST['retweet'],$_SESSION['id']));
-        $retweet_check = $usersFindret->fetch();
+        $users_find_ret = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
+        $users_find_ret->execute(array($_REQUEST['retweet'],$_SESSION['id']));
+        $retweet_check = $users_find_ret->fetch();
 
         // ログインユーザーがリツイート済の投稿ではないかチェック    
-        $findRet = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
-        $findRet->execute(array($retweet_main_info['retweet_post_id'], $_SESSION['id']));
-        $findRetCheck = $findRet->fetch();
+        $find_ret = $db->prepare('SELECT COUNT(*) AS ret_cnt FROM posts WHERE retweet_post_id = ? AND retweet_member_id = ?');
+        $find_ret->execute(array($retweet_main_info['retweet_post_id'], $_SESSION['id']));
+        $find_ret_check = $find_ret->fetch();
         
         // 登録処理（リツイートしていない場合）
         if($retweet_check['ret_cnt'] < 1 && $findRetCheck['ret_cnt'] < 1) {

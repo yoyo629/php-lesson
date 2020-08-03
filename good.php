@@ -26,14 +26,14 @@ try {
         $tweet_main_info = $tweet_info->fetch();
 
         // いいねした投稿IDとログインユーザーIDからいいね済かチェック
-        $usersFindgood = $db->prepare('SELECT * FROM good WHERE post_id = ? AND member_id = ?');
-        $usersFindgood->execute(array( $_REQUEST['good'], $_SESSION['id']));
-        $good_check = $usersFindgood->fetch();
+        $users_find_good = $db->prepare('SELECT * FROM good WHERE post_id = ? AND member_id = ?');
+        $users_find_good->execute(array( $_REQUEST['good'], $_SESSION['id']));
+        $good_check = $users_find_good->fetch();
         
         // いいね済のリツイートであるかチェック
-        $usersRetcheck = $db->prepare('SELECT * FROM good WHERE retweet_post_id = ? AND member_id = ?');
-        $usersRetcheck->execute(array( $tweet_main_info['retweet_post_id'], $_SESSION['id']));
-        $ret_good_check = $usersRetcheck->fetch();
+        $users_ret_check = $db->prepare('SELECT * FROM good WHERE retweet_post_id = ? AND member_id = ?');
+        $users_ret_check->execute(array( $tweet_main_info['retweet_post_id'], $_SESSION['id']));
+        $ret_good_check = $users_ret_check->fetch();
 
         $check = $db->prepare('SELECT * FROM good WHERE post_id = ? AND member_id = ?');
         $check->execute(array( $tweet_main_info['retweet_post_id'], $_SESSION['id']));
