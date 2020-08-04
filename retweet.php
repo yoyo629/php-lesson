@@ -2,7 +2,7 @@
 session_start();
 require('dbconnect.php');
 
-// バリデーション実装(1-9の文字列を検証)
+// リツイート機能のバリデーションチェック
 if(isset($_REQUEST['retweet'])) {
     if(!preg_match('/^0$|^[1-9][0-9]*$/',$_REQUEST['retweet'])) {
         echo '不正な入力です';
