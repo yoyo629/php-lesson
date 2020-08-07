@@ -71,6 +71,8 @@ try {
                 $update_ret_good = $db->prepare('UPDATE good SET good_count = ? WHERE retweet_post_id = ?');
                 $update_ret_good->execute(array( $good_count['good_count'], $tweet_main_info['retweet_post_id']));
             }
+         // トランザクション完了（コミット）
+        $db->commit();
 
         header('Location: index.php');
         exit();    

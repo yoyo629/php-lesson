@@ -43,7 +43,7 @@ try {
         $find_ret_check = $find_ret->fetch();
         
         // 登録処理（リツイートしていない場合）
-        if($retweet_check['ret_cnt'] < 1 && $findRetCheck['ret_cnt'] < 1) {
+        if($retweet_check['ret_cnt'] < 1 && $find_ret_check['ret_cnt'] < 1) {
             if($retweet_main_info['retweet_post_id'] < 1) { 
                 $retweet_add = $db->prepare('INSERT INTO posts SET message = ?, member_id = ?,retweet_post_id = ?,retweet_member_id = ?, created = NOW()');
                 $retweet_add->execute(array($retweet_main_info['message'],$retweet_main_info['member_id'],$_REQUEST['retweet'],$_SESSION['id']));
@@ -144,7 +144,7 @@ try {
                 $retweet_good_del = $db->prepare('DELETE FROM good WHERE retweet_post_id = ? AND member_id = ?');
                 $retweet_good_del->execute(array($_REQUEST['retweet'],$_SESSION['id']));
 
-    // トランザクション完了（コミット）
+    // // トランザクション完了（コミット）
     $db->commit();
             
     header('Location: index.php'); 
