@@ -117,6 +117,6 @@ try {
 } catch (PDOException $e) {
     // ロールバックでトランザクションを取り消し
     $db->rollback();
-    echo '登録エラー : ' . $e->getMessage();
+    echo '登録エラー : 不正な入力のため登録できません';
     exit();
 }
