@@ -2,7 +2,7 @@
 session_start();
 require('dbconnect.php');
 
-if(isset($_SESSION['id'])) {
+if (isset($_SESSION['id'])) {
     $id = $_REQUEST['id'];
 
     // 投稿を検査する
@@ -17,5 +17,5 @@ if(isset($_SESSION['id'])) {
     }
 }
 
-header('Location: index.php'); exit();
-?>
+header('Location: index.php');
+exit();
